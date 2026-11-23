@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- -p:TargetFramework allows one smoke consumer to compile on Android/iOS/Mac Catalyst. -->
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0-android</TargetFramework>
+    <UseMaui>true</UseMaui>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <ProjectReference Include="../../src/Laveyana.Maui.UI/Laveyana.Maui.UI.csproj" />
+    <ProjectReference Include="../../src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj"
+                      Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'">
+    <Compile Remove="WindowsSmokeConsumer.cs" />
+  </ItemGroup>
+</Project>

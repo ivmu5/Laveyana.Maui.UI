@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Laveyana.Maui.UI/Laveyana.Maui.UI.csproj" />
+    <Project Path="src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj" />
+  </Folder>
+</Solution>

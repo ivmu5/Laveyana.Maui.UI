@@ -1,0 +1,87 @@
+name: Extended Regression
+
+on:
+  schedule:
+    - cron: '17 2 1 * *' # 1-е число каждого месяца, 02:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repeated-tests:
+    name: Five repeated NUnit runs (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.4xx
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: dotnet restore tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj
+      - run: dotnet build tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj -c Release --no-restore
+      - name: Repeat suite five times
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($index in 1..5) {
+            dotnet test tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj -c Release --no-build --no-restore --logger 'trx;LogFileName=repeat.trx' --results-directory "artifacts/trx/$index"
+            if ($LASTEXITCODE -ne 0) { $failed = $true }
+            python tools/check_trx.py "artifacts/trx/$index/repeat.trx"
+            if ($LASTEXITCODE -ne 0) { $failed = $true }
+          }
+          if ($failed) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-${{ matrix.os }}
+          path: artifacts/trx/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+  android-build:
+    name: Android MAUI consumer compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.4xx
+      - run: dotnet workload install android maui-android --skip-manifest-update
+      - run: dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:TargetFramework=net10.0-android
+      - run: dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -f net10.0-android --no-restore
+
+  apple-build:
+    name: Apple MAUI consumer compile (${{ matrix.tfm }})
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        tfm: [net10.0-ios, net10.0-maccatalyst]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.4xx
+      - run: dotnet workload install ios maccatalyst maui-ios maui-maccatalyst --skip-manifest-update
+      - run: dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:TargetFramework=${{ matrix.tfm }}
+      - run: dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -f ${{ matrix.tfm }} --no-restore

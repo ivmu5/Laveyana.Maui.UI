@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <LaveyanaVersion>0.1.0-alpha.3</LaveyanaVersion>
+    <Version>$(LaveyanaVersion)</Version>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <Company>Laveyana</Company>
+    <Authors>ivmu5</Authors>
+    <Copyright>Copyright © 2026 ivmu5</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/ivmu5/Laveyana.Maui.UI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>laveyana;maui;ui;fluent;theme;controls;animation</PackageTags>
+    <PackageReleaseNotes>Первый предварительный выпуск универсального MAUI UI toolkit.</PackageReleaseNotes>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

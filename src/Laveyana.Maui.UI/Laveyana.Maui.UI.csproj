@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Laveyana.Maui.UI</AssemblyName>
+    <RootNamespace>Laveyana.Maui.UI</RootNamespace>
+    <PackageId>Laveyana.Maui.UI</PackageId>
+    <Description>Переиспользуемые Fluent API, темы, настройки, компоненты, адаптивные списки и анимации для .NET MAUI.</Description>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

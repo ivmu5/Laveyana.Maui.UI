@@ -1,0 +1,167 @@
+# Laveyana.Maui.UI
+
+Открытый набор переиспользуемых компонентов и Fluent API для **.NET MAUI 10**. Библиотека выделена из подходов к интерфейсу [LavPulse](https://github.com/ivmu5/LavPulse) с дополнительными идеями [LavOSC](https://github.com/ivmu5/LavOSC). Синтаксис цепочек вдохновлён архивным [CustomMauiUI-old-](https://github.com/ivmu5/CustomMauiUI-old-).
+
+**Статус: `0.1.0-alpha.3`, исправлены известные ошибки компиляции из отчёта Visual Studio, но полноценная сборка .NET и CI ещё не подтверждены.** API может корректироваться до стабильной версии 1.0.
+
+## Зачем нужен пакет
+
+- Единый внешний вид приложения без зависимости от его предметной области.
+- Темы: системная / светлая / тёмная / AMOLED, палитры LavPulse, Ocean, Warm и LavOSC, свои цвета, контрастные роли.
+- Fluent-расширения над нативными MAUI-элементами: размеры, отступы, цвета, сетки, обработчики, привязки.
+- Числовое поле настроек (ввод, ползунок, сброс, нормализация, двусторонний binding).
+- Цветовой редактор HSV, готовый редактор оформления, ленивые группы настроек и вкладки.
+- Адаптивная сетка карточек и виртуализированный список **фиксированной** высоты строк.
+- Анимации по запросу (без бесконечного таймера), настройки частоты кадров и отключения эффектов.
+- Отдельное Windows-расширение: заголовок окна, интерактивные вкладки, F11, показ при наведении курсора сверху в полноэкранном режиме.
+
+## Пакеты
+
+| NuGet ID | Сборка | Целевая платформа | Назначение |
+|---|---|---|---|
+| `Laveyana.Maui.UI` | `Laveyana.Maui.UI.dll` | `net10.0` | Общие компоненты для MAUI Windows / Android / iOS / Mac Catalyst |
+| `Laveyana.Maui.UI.Windows` | `Laveyana.Maui.UI.Windows.dll` | `net10.0-windows10.0.19041.0` | **Опциональный** нативный заголовок WinUI |
+
+Второй пакет ссылается на первый; обратной зависимости нет. Ни один из них не зависит от LavPulse или LavOSC. В проекте нет собственной БД и обязательного хранилища настроек.
+
+## Установка
+
+Пока пакеты ещё не выпущены, подключайте их через `ProjectReference`. После первого релиза:
+
+```bash
+dotnet add package Laveyana.Maui.UI --version 0.1.0-alpha.3
+# Только для Windows MAUI-проекта:
+dotnet add package Laveyana.Maui.UI.Windows --version 0.1.0-alpha.3
+```
+
+### Регистрация в MauiProgram.cs
+
+```csharp
+using Laveyana.Maui.UI;
+using Laveyana.Maui.UI.Themes;
+
+return MauiApp.CreateBuilder()
+    .UseMauiApp<App>()
+    .UseLaveyanaMauiUi(new UiThemeSettings
+    {
+        Mode = UiThemeMode.System,
+        Preset = UiPalettePreset.LavPulse
+    })
+    .Build();
+```
+
+В `Application` подключите менеджер **после создания ресурсов**:
+
+```csharp
+using Laveyana.Maui.UI.Themes;
+using Laveyana.Maui.UI.Settings;
+
+public partial class App : Application
+{
+    public App(UiThemeManager themes)
+    {
+        InitializeComponent();
+        themes.Attach(this, UiThemePreferences.Load("lavpulse.ui"));
+    }
+}
+```
+
+Настройки сохраняются **явно**: `UiThemePreferences.Save(themes.Settings, "lavpulse.ui")`. Можно использовать собственное хранилище через `UiThemeManager.Apply(...)`.
+
+## Fluent API
+
+```csharp
+using Laveyana.Maui.UI.Controls;
+using Laveyana.Maui.UI.Fluent;
+using Laveyana.Maui.UI.Themes;
+
+var heading = Ui.Text("Настройки", 22, UiColorRole.Text, bold: true)
+    .WithMargin(0, 8)
+    .OnTap((_, _) => System.Diagnostics.Debug.WriteLine("Нажатие"));
+
+var port = Ui.Number("UDP-порт", 1, 65535, 9000, step: 1, showSlider: false);
+port.ValueChanged += (_, value) => System.Diagnostics.Debug.WriteLine(value);
+
+var panel = Ui.Card(Ui.Stack(10, heading, port));
+var cards = Ui.Cards(maximumColumns: 3, minimumColumnWidth: 290);
+cards.SetCards([panel, Ui.Card(Ui.Text("Сеть")), Ui.Card(Ui.Text("Модули"))]);
+```
+
+### Привязки
+
+```csharp
+// ViewModel реализует INotifyPropertyChanged.
+var label = new Label().Bind(x => x.Text, viewModel, x => x.Title);
+```
+
+Это стандартная MAUI Binding, а не собственная система наблюдения за состоянием. Для NativeAOT/trim следует проверить привязки отражения и рассмотреть скомпилированные XAML bindings.
+
+### Полный редактор оформления
+
+```csharp
+var appearance = Ui.Appearance(themes.Settings);
+appearance.SettingsChanged += (_, next) =>
+{
+    themes.Apply(next); // предпросмотр сразу
+    UiThemePreferences.Save(next, "lavosc.ui");
+};
+```
+
+Редактор позволяет выбирать тему, палитру, AMOLED и пользовательские цвета через HSV + HEX. Его можно встроить в любой экран приложения; он не сохраняет настройки сам по себе.
+
+### Настройки и навигация
+
+```csharp
+var settings = Ui.Settings()
+    .Section("Интерфейс", () => Ui.Stack(8, Ui.Text("Цвета и тема")))
+    .Section("О программе", () => Ui.Text("Версия 1"));
+
+var tabs = new Laveyana.Maui.UI.Navigation.UiTabHost()
+    .Tab("Главная", () => Ui.Text("Панель управления"))
+    .Tab("Настройки", () => settings);
+```
+
+### Виртуализация списка
+
+```csharp
+var list = new UiVirtualList<MyItem, Label>(
+    rowHeight: 54,
+    create: () => Ui.Text(""),
+    bind: (row, item, index) => row.Text = item.Title);
+list.SetItems(myUniqueItems);
+```
+
+**Ограничения:** одна и та же ссылка на модель не должна дублироваться; высота строк постоянна; для переменной высоты предпочтителен штатный `CollectionView`. Подписки, добавленные к повторно используемым строкам, следует снимать в `release`.
+
+### Анимации
+
+```csharp
+var animator = new Laveyana.Maui.UI.Animation.UiAnimator(
+    new() { FrameRate = Laveyana.Maui.UI.Animation.UiFrameRate.Fps120 });
+await animator.FadeAsync(panel, 0.5, TimeSpan.FromMilliseconds(200));
+await animator.SlideAsync(panel, 0, 0, TimeSpan.FromMilliseconds(260));
+```
+
+Частота кадров — ограничение **запрашиваемого интервала**, не гарантия реальных 120 FPS. Вызывайте анимации на UI-потоке; обновление содержимого, которое не видно, лучше останавливать на уровне приложения.
+
+## Проверка и публикация
+
+- `.github/workflows/verify.yml`: PR + push в `master` + ручной запуск, NUnit под Linux/Windows с проверкой TRX, Windows + пользовательский smoke-проект, тестовая упаковка.
+- `.github/workflows/extended-regression.yml`: **1-го числа каждого месяца**, вручную, пять повторений NUnit, Android и Apple smoke-компиляция.
+- `.github/workflows/publish-nuget.yml`: выпуск **только после публикации GitHub Release**, проверка semver/версии/принадлежности к `master`, тесты, упаковка, OIDC NuGet Trusted Publishing.
+
+Прежде чем выпускать пакет, проверьте [инструкции по публикации](docs/publishing.ru.md) и [повторный аудит с перечнем исправленных ошибок](docs/verification.ru.md). Ни создание GitHub Release, ни пуш в NuGet не выполняются при обычном коммите.
+
+## Совместимость с приложениями
+
+Схема переноса из существующих репозиториев: [docs/migration.ru.md](docs/migration.ru.md). В текущий архив включена **самостоятельная библиотека**, исходники LavPulse/LavOSC не изменены.
+
+## Документация
+
+- [Архитектура и границы ответственности](docs/architecture.ru.md)
+- [Переход LavPulse и LavOSC на общую сборку](docs/migration.ru.md)
+- [GitHub Actions и NuGet](docs/publishing.ru.md)
+- [Заголовок WinUI](docs/windowing.ru.md)
+- [Статус проверки](docs/verification.ru.md)
+
+Лицензия: **MIT**, © 2026 ivmu5.
