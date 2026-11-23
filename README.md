@@ -154,9 +154,10 @@ await animator.SlideAsync(panel, 0, 0, TimeSpan.FromMilliseconds(260));
 
 - `.github/workflows/verify.yml`: PR + push в `master` + ручной запуск, NUnit под Linux/Windows с проверкой TRX, Windows + пользовательский smoke-проект, тестовая упаковка.
 - `.github/workflows/extended-regression.yml`: **1-го числа каждого месяца**, вручную, пять повторений NUnit, Android и Apple smoke-компиляция.
-- `.github/workflows/publish-nuget.yml`: выпуск **только после публикации GitHub Release**, проверка схемы `v.YY.MM.vv`/версии/принадлежности к `master`, тесты, упаковка, OIDC NuGet Trusted Publishing.
+- `.github/workflows/automatic-release.yml`: после успешного Verify на итоговом коммите объединённого PR в `master` создаёт GitHub Release новой версии.
+- `.github/workflows/publish-nuget.yml`: выпуск **только после публикации GitHub Release** (вызывается напрямую после автоматического Release или по событию ручной публикации), проверка схемы `v.YY.MM.vv`/версии/принадлежности к `master`, тесты, упаковка, OIDC NuGet Trusted Publishing.
 
-Прежде чем выпускать пакет, проверьте [инструкции по публикации](docs/publishing.ru.md) и [повторный аудит с перечнем исправленных ошибок](docs/verification.ru.md). Ни создание GitHub Release, ни пуш в NuGet не выполняются при обычном коммите.
+Прежде чем выпускать пакет, проверьте [инструкции по публикации](docs/publishing.ru.md) и [повторный аудит с перечнем исправленных ошибок](docs/verification.ru.md). При обычном коммите без объединения PR выпуск не начинается. После успешного объединённого PR в `master` может автоматически создаться GitHub Release и начаться публикация NuGet, **если версия в `Directory.Build.props` новая**. Каждому новому выпуску необходим новый `vv`; обновляйте версию в PR. См. [политику выпуска](docs/publishing.ru.md).
 
 ## Совместимость с приложениями
 
