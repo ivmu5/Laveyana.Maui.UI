@@ -45,6 +45,18 @@ def check(path: Path) -> None:
             raise ValueError(f"{path}: invalid job {name!r}")
         if "uses" not in job and "steps" not in job:
             raise ValueError(f"{path}: job {name!r} lacks steps or uses")
+        # A new GitHub Actions job starts without a local .git repository.
+        # gh release create must run after checkout to avoid "not a git repository".
+        seen_checkout = False
+        for step in job.get("steps", []):
+            if not isinstance(step, dict):
+                continue
+            if str(step.get("uses", "")).startswith("actions/checkout@"):
+                seen_checkout = True
+            if "gh release create " in str(step.get("run", "")) and not seen_checkout:
+                raise ValueError(
+                    f"{path}: job {name!r} creates a release without preceding actions/checkout"
+                )
 
 
 def main() -> int:

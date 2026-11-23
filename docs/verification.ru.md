@@ -1,3 +1,13 @@
+# Сбой автоматического релиза 23.11.2026 — 45185999899
+
+После успешного `Verify` и проверки объединённого PR задание `Create GitHub Release` завершилось ошибкой `fatal: not a git repository`: в данном job не выполнялся `actions/checkout`, поэтому `gh release create` не мог определить репозиторий.
+
+Исправление: перед созданием релиза добавлен `actions/checkout@v4` с точным проверенным SHA, а также `GH_REPO` с именем GitHub-репозитория. В `tools/check_workflows.py` добавлена проверка обязательного checkout перед `gh release create`, в регрессионных тестах — соответствующий случай.
+
+Release `v0.26.11.1` и Git-тег на момент исправления отсутствовали, поэтому после объединения исправления можно повторить автоматическую публикацию той же версии. Проверки в PR и после объединения обязательны.
+
+---
+
 # Автоматическая публикация — исправление от 23.11.2026
 
 Запуск `Automatic Release` [45183107051](https://github.com/ivmu5/Laveyana.Maui.UI/actions/runs/45183107051) завершился на `actions/checkout`: `fatal: invalid refspec '+refs/heads/${ github.event.workflow_run.head_sha }*'`.

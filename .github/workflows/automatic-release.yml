@@ -77,10 +77,15 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.select.outputs.sha }}
+          persist-credentials: false
       - name: Create versioned release for verified SHA
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.select.outputs.tag }}
           SHA: ${{ needs.select.outputs.sha }}
         run: |
