@@ -1,0 +1,107 @@
+name: Automatic Release
+
+on:
+  workflow_run:
+    workflows: [Verify]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automatic-release-master
+  cancel-in-progress: false
+
+jobs:
+  select:
+    name: Select verified merged commit
+    if: >-
+      github.repository == 'ivmu5/Laveyana.Maui.UI' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      publish: ${ steps.inspect.outputs.publish }
+      tag: ${ steps.inspect.outputs.tag }
+      sha: ${ steps.inspect.outputs.sha }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${ github.event.workflow_run.head_sha }
+          persist-credentials: false
+      - name: Ensure a merged PR, new version and latest master commit
+        id: inspect
+        shell: bash
+        env:
+          GH_TOKEN: ${ github.token }
+          SHA: ${ github.event.workflow_run.head_sha }
+        run: |
+          set -euo pipefail
+          echo 'publish=false' >> "$GITHUB_OUTPUT"
+          current="$(gh api "repos/$GITHUB_REPOSITORY/branches/master" --jq '.commit.sha')"
+          if [[ "$SHA" != "$current" ]]; then
+            echo 'Verified run is not the latest master commit.'
+            exit 0
+          fi
+          merged="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null and .base.ref == "master" and .merge_commit_sha == "'"$SHA"'")] | length')"
+          if [[ "$merged" -eq 0 ]]; then
+            echo 'Master push is not associated with a merged PR.'
+            exit 0
+          fi
+          python3 tools/check_version.py
+          version="$(python3 -c 'import xml.etree.ElementTree as ET; print(ET.parse("Directory.Build.props").findtext("./PropertyGroup/LaveyanaVersion"))')"
+          tag="v$version"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "Release $tag already exists. Not publishing a duplicate."
+              exit 0
+            fi
+            echo "Tag $tag exists without a release. Manual review required." >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Create GitHub Release
+    needs: select
+    if: needs.select.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create versioned release for verified SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${ github.token }
+          TAG: ${ needs.select.outputs.tag }
+          SHA: ${ needs.select.outputs.sha }
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/branches/master" --jq '.commit.sha')"
+          test "$SHA" = "$current" || { echo 'master moved; declining release' >&2; exit 1; }
+          major="${TAG#v}"
+          major="${major%%.*}"
+          flags=()
+          if [[ "$major" == 0 ]]; then flags+=(--prerelease); fi
+          gh release create "$TAG" --target "$SHA" --title "$TAG" --generate-notes "${flags[@]}"
+          gh release view "$TAG" --json tagName,isDraft
+
+  nuget:
+    name: Publish Release to NuGet
+    needs: [select, release]
+    if: needs.release.result == 'success'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish-nuget.yml
+    with:
+      release_tag: ${ needs.select.outputs.tag }
+    secrets: inherit
