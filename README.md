@@ -2,7 +2,7 @@
 
 Открытый набор переиспользуемых компонентов и Fluent API для **.NET MAUI 10**. Библиотека выделена из подходов к интерфейсу [LavPulse](https://github.com/ivmu5/LavPulse) с дополнительными идеями [LavOSC](https://github.com/ivmu5/LavOSC). Синтаксис цепочек вдохновлён архивным [CustomMauiUI-old-](https://github.com/ivmu5/CustomMauiUI-old-).
 
-**Статус: `0.1.0-alpha.3`, исправлены известные ошибки компиляции из отчёта Visual Studio, но полноценная сборка .NET и CI ещё не подтверждены.** API может корректироваться до стабильной версии 1.0.
+**Статус: `0.26.11.1` (глобальная версия 0, предварительная разработка).** Windows-сборка библиотек и часть CI-проверок прошли, но полный Verify и тесты интерфейса ещё не подтверждены. До стабильной версии 1 API может изменяться.
 
 ## Зачем нужен пакет
 
@@ -24,14 +24,20 @@
 
 Второй пакет ссылается на первый; обратной зависимости нет. Ни один из них не зависит от LavPulse или LavOSC. В проекте нет собственной БД и обязательного хранилища настроек.
 
+## Версионирование
+
+Формат: **`v.YY.MM.vv`** — глобальная версия, две цифры года, месяц с ведущим нулём и номер опубликованного выпуска в этом месяце (начиная с 1). Например, `0.26.11.1` → `0.26.11.2` → `0.26.12.1`. Git-тег содержит префикс `v`: `v0.26.11.1`, а свойство `Version` и версия NuGet префикса не содержат. Оба пакета выпускаются с одной версией.
+
+**Важно:** схема отличается от SemVer. NuGet поддерживает четыре числовых компонента, но удаляет ведущие нули: тег `v0.27.01.1` создаст пакет `0.27.1.1`. Версия `0.*` сама по себе не помечается NuGet как prerelease. Подробности — в [правилах версионирования](docs/versioning.ru.md).
+
 ## Установка
 
 Пока пакеты ещё не выпущены, подключайте их через `ProjectReference`. После первого релиза:
 
 ```bash
-dotnet add package Laveyana.Maui.UI --version 0.1.0-alpha.3
+dotnet add package Laveyana.Maui.UI --version 0.26.11.1
 # Только для Windows MAUI-проекта:
-dotnet add package Laveyana.Maui.UI.Windows --version 0.1.0-alpha.3
+dotnet add package Laveyana.Maui.UI.Windows --version 0.26.11.1
 ```
 
 ### Регистрация в MauiProgram.cs
@@ -148,7 +154,7 @@ await animator.SlideAsync(panel, 0, 0, TimeSpan.FromMilliseconds(260));
 
 - `.github/workflows/verify.yml`: PR + push в `master` + ручной запуск, NUnit под Linux/Windows с проверкой TRX, Windows + пользовательский smoke-проект, тестовая упаковка.
 - `.github/workflows/extended-regression.yml`: **1-го числа каждого месяца**, вручную, пять повторений NUnit, Android и Apple smoke-компиляция.
-- `.github/workflows/publish-nuget.yml`: выпуск **только после публикации GitHub Release**, проверка semver/версии/принадлежности к `master`, тесты, упаковка, OIDC NuGet Trusted Publishing.
+- `.github/workflows/publish-nuget.yml`: выпуск **только после публикации GitHub Release**, проверка схемы `v.YY.MM.vv`/версии/принадлежности к `master`, тесты, упаковка, OIDC NuGet Trusted Publishing.
 
 Прежде чем выпускать пакет, проверьте [инструкции по публикации](docs/publishing.ru.md) и [повторный аудит с перечнем исправленных ошибок](docs/verification.ru.md). Ни создание GitHub Release, ни пуш в NuGet не выполняются при обычном коммите.
 
@@ -161,6 +167,7 @@ await animator.SlideAsync(panel, 0, 0, TimeSpan.FromMilliseconds(260));
 - [Архитектура и границы ответственности](docs/architecture.ru.md)
 - [Переход LavPulse и LavOSC на общую сборку](docs/migration.ru.md)
 - [GitHub Actions и NuGet](docs/publishing.ru.md)
+- [Правила версионирования v.YY.MM.vv](docs/versioning.ru.md)
 - [Заголовок WinUI](docs/windowing.ru.md)
 - [Статус проверки](docs/verification.ru.md)
 
