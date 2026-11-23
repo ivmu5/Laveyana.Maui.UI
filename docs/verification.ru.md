@@ -1,3 +1,15 @@
+# Автоматическая публикация — исправление от 23.11.2026
+
+Запуск `Automatic Release` [45183107051](https://github.com/ivmu5/Laveyana.Maui.UI/actions/runs/45183107051) завершился на `actions/checkout`: `fatal: invalid refspec '+refs/heads/${ github.event.workflow_run.head_sha }*'`.
+
+Причина: в `automatic-release.yml` и `publish-nuget.yml` вместо обязательного синтаксиса выражений GitHub Actions `${{ github.* }}` ошибочно присутствовал текст `${ github.* }`, который не интерпретируется движком. Исправлены все такие вхождения в двух workflow.
+
+В `tools/check_workflows.py` добавлена отдельная проверка неправильных GitHub-выражений, а в `tools/test_workflow_syntax.py` — регрессионные тесты. Ранее YAML валидировался, но эта ошибка не обнаруживалась.
+
+**После слияния PR исправления:** заново запустятся Verify на `master`, затем Automatic Release. До исправления релиз не был создан; пакет NuGet не публиковался.
+
+---
+
 # Дополнение: версионирование и повторный Verify — 23.11.2026
 
 На PR #1 повторный Verify подтвердил Windows WinUI + NuGet smoke и NUnit под Ubuntu, но Windows-сборка провалилась на выводе результата TRX: Python выдавал `UnicodeEncodeError: 'charmap'` при печати кириллицы. В `tools/check_trx.py` включён UTF-8 для stdout/stderr. Требуется следующий CI-прогон.
