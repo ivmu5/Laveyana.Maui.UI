@@ -1,3 +1,14 @@
+# Проверка GitHub Actions — 23.11.2026
+
+Запуск Verify #1 (45168313025) выявил две независимые проблемы подготовки CI:
+
+1. Тесты NUnit наследовали `GenerateDocumentationFile=true` вместе с `TreatWarningsAsErrors=true`. Это порождало `CS1591` у тестовых классов и методов до запуска самих тестов. Для тестовых проектов XML-документация отключена, для публикуемых библиотек сохранена.
+2. Smoke-проект использовал глобальное `-p:TargetFramework=...`, которое передавалось проектам по `ProjectReference` и могло менять целевой TFM переносимой `Laveyana.Maui.UI`. При Windows-сборке это привело к `MSB4086` (неопределённый `TargetPlatformMinVersion`). Введено собственное свойство `SmokeTargetFramework`, а также указан Windows minimum для самого smoke-проекта.
+
+Прежний сбой не означает, что NUnit-тесты выполнялись. После исправлений требуется новый прогон Verify и проверка release workflow.
+
+---
+
 # Исправления после компиляции: 0.1.0-alpha.3
 
 Дата: 23 ноября 2026 года.
@@ -64,8 +75,8 @@ dotnet test tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj -c Releas
 python tools/check_trx.py artifacts/trx/local.trx
 dotnet restore src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj
 dotnet build src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj -c Release
-dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
-dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -f net10.0-windows10.0.19041.0
+dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:SmokeTargetFramework=net10.0-windows10.0.19041.0
+dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -p:SmokeTargetFramework=net10.0-windows10.0.19041.0
 dotnet pack src/Laveyana.Maui.UI/Laveyana.Maui.UI.csproj -c Release -o artifacts/nuget
 dotnet pack src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj -c Release -o artifacts/nuget
 ```

@@ -69,9 +69,9 @@ jobs:
       - name: Compile Windows MAUI consumer against both assemblies
         shell: pwsh
         run: |
-          dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:TargetFramework=net10.0-windows10.0.19041.0
+          dotnet restore tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -p:SmokeTargetFramework=net10.0-windows10.0.19041.0
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -f net10.0-windows10.0.19041.0 --no-restore
+          dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -p:SmokeTargetFramework=net10.0-windows10.0.19041.0 --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Pack both NuGet packages (without publishing)
         shell: pwsh
