@@ -26,20 +26,20 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      publish: ${ steps.inspect.outputs.publish }
-      tag: ${ steps.inspect.outputs.tag }
-      sha: ${ steps.inspect.outputs.sha }
+      publish: ${{ steps.inspect.outputs.publish }}
+      tag: ${{ steps.inspect.outputs.tag }}
+      sha: ${{ steps.inspect.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${ github.event.workflow_run.head_sha }
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
       - name: Ensure a merged PR, new version and latest master commit
         id: inspect
         shell: bash
         env:
-          GH_TOKEN: ${ github.token }
-          SHA: ${ github.event.workflow_run.head_sha }
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           echo 'publish=false' >> "$GITHUB_OUTPUT"
@@ -80,9 +80,9 @@ jobs:
       - name: Create versioned release for verified SHA
         shell: bash
         env:
-          GH_TOKEN: ${ github.token }
-          TAG: ${ needs.select.outputs.tag }
-          SHA: ${ needs.select.outputs.sha }
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.select.outputs.tag }}
+          SHA: ${{ needs.select.outputs.sha }}
         run: |
           set -euo pipefail
           current="$(gh api "repos/$GITHUB_REPOSITORY/branches/master" --jq '.commit.sha')"
@@ -103,5 +103,5 @@ jobs:
       id-token: write
     uses: ./.github/workflows/publish-nuget.yml
     with:
-      release_tag: ${ needs.select.outputs.tag }
+      release_tag: ${{ needs.select.outputs.tag }}
     secrets: inherit

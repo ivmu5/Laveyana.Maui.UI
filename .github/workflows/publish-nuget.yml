@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: nuget-release-${ inputs.release_tag || github.event.release.tag_name }
+  group: nuget-release-${{ inputs.release_tag || github.event.release.tag_name }}
   cancel-in-progress: false
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${ inputs.release_tag || github.event.release.tag_name }
+          ref: ${{ inputs.release_tag || github.event.release.tag_name }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-dotnet@v4
@@ -37,8 +37,8 @@ jobs:
       - name: Validate release tag and origin
         shell: pwsh
         env:
-          RELEASE_TAG: ${ inputs.release_tag || github.event.release.tag_name }
-          GH_TOKEN: ${ github.token }
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           python tools/check_version.py --tag $env:RELEASE_TAG
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -119,7 +119,7 @@ jobs:
       - name: Validate NuGet publisher settings
         shell: bash
         env:
-          NUGET_USERNAME: ${ vars.NUGET_USERNAME }
+          NUGET_USERNAME: ${{ vars.NUGET_USERNAME }}
         run: |
           set -euo pipefail
           test -n "$NUGET_USERNAME"
@@ -128,12 +128,12 @@ jobs:
         id: login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
-          user: ${ vars.NUGET_USERNAME }
+          user: ${{ vars.NUGET_USERNAME }}
       - name: Publish core first and Windows second
         shell: bash
         env:
-          VERSION_TAG: ${ inputs.release_tag || github.event.release.tag_name }
-          NUGET_API_KEY: ${ steps.login.outputs.NUGET_API_KEY }
+          VERSION_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           set -euo pipefail
           version="${VERSION_TAG#v}"

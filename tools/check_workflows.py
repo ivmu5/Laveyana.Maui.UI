@@ -1,6 +1,7 @@
 """Check workflow YAML syntax and duplicate keys before merging a PR."""
 from pathlib import Path
 import sys
+import re
 import yaml
 
 
@@ -15,9 +16,23 @@ class StrictLoader(yaml.BaseLoader):
         return result
 
 
+def validate_expressions(source: str) -> None:
+    """Reject expressions such as ${ github.sha } that GitHub treats as literal text."""
+    malformed = re.search(
+        r"\$\{(?!\{)\s*(?:github|inputs|needs|vars|steps|matrix|env|secrets)\b",
+        source,
+    )
+    if malformed:
+        line = source.count("\n", 0, malformed.start()) + 1
+        raise ValueError(
+            f"Malformed GitHub expression on line {line}; use ${{{{ ... }}}} syntax"
+        )
+
+
 def check(path: Path) -> None:
-    with path.open(encoding="utf-8") as stream:
-        data = yaml.load(stream, Loader=StrictLoader)
+    source = path.read_text(encoding="utf-8")
+    validate_expressions(source)
+    data = yaml.load(source, Loader=StrictLoader)
     if not isinstance(data, dict):
         raise ValueError(f"{path}: expected YAML mapping")
     if not data.get("name") or not data.get("on"):
