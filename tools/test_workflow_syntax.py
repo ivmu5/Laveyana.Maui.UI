@@ -39,7 +39,7 @@ jobs:
             with self.assertRaisesRegex(ValueError, "without preceding actions/checkout"):
                 check(path)
             path.write_text(
-                sample.replace("      - name: Create", "      - uses: actions/checkout@v4\\n      - name: Create"),
+                sample.replace("      - name: Create", "      - uses: actions/checkout@v4\n      - name: Create"),
                 encoding="utf-8",
             )
             check(path)
