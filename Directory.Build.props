@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <LaveyanaVersion>0.1.0-alpha.3</LaveyanaVersion>
+    <!-- v.YY.MM.vv: глобальная версия, год, месяц и выпуск за месяц. -->
+    <LaveyanaVersion>0.26.11.1</LaveyanaVersion>
     <Version>$(LaveyanaVersion)</Version>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>

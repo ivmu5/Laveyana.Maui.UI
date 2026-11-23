@@ -42,4 +42,9 @@ def main() -> int:
 
 
 if __name__ == '__main__':
+    # Windows runners may use a legacy console encoding that cannot print Cyrillic.
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
     raise SystemExit(main())
