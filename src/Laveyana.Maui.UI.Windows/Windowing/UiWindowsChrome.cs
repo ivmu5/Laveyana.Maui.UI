@@ -44,10 +44,11 @@ public sealed class UiWindowsChrome : IDisposable
     private readonly NativeWindow _native;
     private readonly NativePanel _root;
     private readonly AppWindow _app;
-    private readonly AppWindowTitleBar _titleBar;
     private readonly OverlappedPresenter _presenter;
     private readonly UiChromeOptions _options;
     private readonly InputNonClientPointerSource _pointer;
+    private const int ButtonWidth = 36;
+    private const int ToolbarWidth = ButtonWidth * 4 + 3 * 3 + 3 * 2 + 8;
     private readonly NativeGrid _caption;
     private readonly NativeGrid _drag;
     private readonly StackPanel _navigation;
@@ -82,8 +83,8 @@ public sealed class UiWindowsChrome : IDisposable
         ArgumentNullException.ThrowIfNull(native);
         if (!AppWindowTitleBar.IsCustomizationSupported()) return;
         native.ExtendsContentIntoTitleBar = true;
-        native.AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
-        native.AppWindow.TitleBar.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        // Collapse system caption buttons; the toolkit owns all four buttons.
+        native.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
     }
 
     /// <summary>Вызвать после появления Handler у MAUI Window. На неподдерживаемых окнах возвращает null.</summary>
@@ -96,7 +97,9 @@ public sealed class UiWindowsChrome : IDisposable
             native.Content is not NativePanel root ||
             native.AppWindow.Presenter is not OverlappedPresenter presenter)
             return null;
-        if (options.Height < 28 || options.AnimationMilliseconds < 0)
+        if (options.Height < 38 || options.AnimationMilliseconds < 0 ||
+            !double.IsFinite(options.LogoWidth) || !double.IsFinite(options.LogoHeight) ||
+            options.LogoWidth <= 0 || options.LogoHeight <= 0)
             throw new ArgumentOutOfRangeException(nameof(options));
         return new UiWindowsChrome(native, root, presenter, options);
     }
@@ -108,16 +111,18 @@ public sealed class UiWindowsChrome : IDisposable
         _presenter = presenter;
         _options = options;
         _app = native.AppWindow;
-        _titleBar = _app.TitleBar;
         _pointer = InputNonClientPointerSource.GetForWindowId(_app.Id);
         _activeTab = Math.Clamp(options.InitialSelectedTab, 0, Math.Max(0, options.Tabs.Count - 1));
         _drag = new NativeGrid { Background = new NativeBrush(Microsoft.UI.Colors.Transparent) };
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8,
             VerticalAlignment = NativeVerticalAlignment.Center };
-        if (options.IconFilePath is { } path && File.Exists(path))
+        Uri? logo = options.LogoUri;
+        if (logo is null && options.IconFilePath is { } path && File.Exists(path))
+            logo = new Uri(Path.GetFullPath(path));
+        if (logo is not null)
         {
-            brand.Children.Add(new NativeImage { Source = new BitmapImage(new Uri(Path.GetFullPath(path))),
-                Width = 25, Height = 25, Stretch = NativeStretch.Uniform });
+            brand.Children.Add(new NativeImage { Source = new BitmapImage(logo),
+                Width = options.LogoWidth, Height = options.LogoHeight, Stretch = NativeStretch.Uniform });
         }
         _brandText = new NativeText
         {
@@ -156,8 +161,14 @@ public sealed class UiWindowsChrome : IDisposable
         });
         _maximizeButton = CreateButton("\uE922", "Развернуть", () =>
         {
-            if (IsFullscreen) ExitFullscreen();
-            _presenter.Maximize();
+            if (IsFullscreen)
+            {
+                ExitFullscreen();
+                _presenter.Maximize();
+            }
+            else if (_presenter.State == OverlappedPresenterState.Maximized) _presenter.Restore();
+            else _presenter.Maximize();
+            UpdateLayout();
         });
         _fullscreenButton = CreateButton("\uE92D", "Полноэкранный режим (F11)", ToggleFullscreen);
         _closeButton = CreateButton("\uE8BB", "Закрыть", native.Close);
@@ -165,11 +176,13 @@ public sealed class UiWindowsChrome : IDisposable
         buttons.Children.Add(_maximizeButton);
         buttons.Children.Add(_fullscreenButton);
         buttons.Children.Add(_closeButton);
+        _closeButton.Resources["ButtonBackgroundPointerOver"] = new NativeBrush(NativeColor.FromArgb(220, 180, 36, 53));
+        _closeButton.Resources["ButtonForegroundPointerOver"] = new NativeBrush(Microsoft.UI.Colors.White);
         _toolbar = new NativeBorder
         {
             Child = buttons, Padding = new NativeThickness(3),
             CornerRadius = new NativeCornerRadius(8),
-            Background = Brush(options.Surface),
+            Background = Brush(options.Surface, options.ToolbarOpacity),
             HorizontalAlignment = NativeHorizontalAlignment.Right,
             VerticalAlignment = NativeVerticalAlignment.Center
         };
@@ -189,6 +202,9 @@ public sealed class UiWindowsChrome : IDisposable
         _drag.SizeChanged += OnLayoutChanged;
         _captionContent.SizeChanged += OnLayoutChanged;
         _toolbar.SizeChanged += OnLayoutChanged;
+        _root.Background ??= new NativeBrush(Microsoft.UI.Colors.Transparent);
+        _root.PointerEntered += OnPointer;
+        _native.VisibilityChanged += OnVisibilityChanged;
         _root.AddHandler(UIElement.PointerMovedEvent, (PointerEventHandler)OnPointer, handledEventsToo: true);
         _root.PointerExited += OnPointer;
         _native.Activated += OnActivated;
@@ -199,10 +215,12 @@ public sealed class UiWindowsChrome : IDisposable
         _f11.Invoked += OnFullscreenHotkey;
         _escape = new NativeKeyboardAccelerator { Key = VirtualKey.Escape };
         _escape.Invoked += OnEscapeHotkey;
+        _root.KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         _root.KeyboardAccelerators.Add(_f11);
         _root.KeyboardAccelerators.Add(_escape);
         Prepare(native);
         UpdateLayout();
+        ApplyColors();
         SetActiveTab(_activeTab);
     }
 
@@ -241,10 +259,18 @@ public sealed class UiWindowsChrome : IDisposable
         _options.Surface = theme[UiColorRole.Card];
         _options.Text = theme[UiColorRole.Text];
         _options.Accent = theme[UiColorRole.Accent];
-        _brandText.Foreground = Brush(_options.Text);
-        _toolbar.Background = Brush(_options.Surface);
+        _options.Border = theme[UiColorRole.Border];
+        ApplyColors();
         SetActiveTab(_activeTab);
         UpdateLayout();
+    }
+
+    private void ApplyColors()
+    {
+        _brandText.Foreground = Brush(_options.Text);
+        _toolbar.Background = Brush(_options.Surface, _options.ToolbarOpacity);
+        foreach (var button in new[] { _minimizeButton, _maximizeButton, _fullscreenButton, _closeButton })
+            button.Foreground = Brush(_options.Text);
     }
 
     private void OnFullscreenHotkey(NativeKeyboardAccelerator _, NativeKeyboardAcceleratorInvokedEventArgs e)
@@ -314,6 +340,11 @@ public sealed class UiWindowsChrome : IDisposable
             SetCaptionVisible(false, false);
     }
 
+    private void OnVisibilityChanged(object sender, WindowVisibilityChangedEventArgs args)
+    {
+        if (!args.Visible && IsFullscreen) SetCaptionVisible(false, false);
+    }
+
     private void SetCaptionVisible(bool visible, bool animate)
     {
         if (_captionVisible == visible && animate) return;
@@ -355,21 +386,17 @@ public sealed class UiWindowsChrome : IDisposable
 
     private void UpdateLayout()
     {
-        double scale = _xamlRoot?.RasterizationScale ?? 1;
         bool full = IsFullscreen;
-        double left = full ? 0 : _titleBar.LeftInset / scale;
-        double right = full ? 0 : _titleBar.RightInset / scale;
-        bool nativeControls = full;
-        _minimizeButton.Visibility = _maximizeButton.Visibility = _closeButton.Visibility =
-            nativeControls ? NativeVisibility.Visible : NativeVisibility.Collapsed;
-        _toolbar.Visibility = full || left > 0 || right > 0 ? NativeVisibility.Visible : NativeVisibility.Collapsed;
-        _toolbar.Margin = new NativeThickness(0, 0, right + 8, 0);
-        double controlRoom = _toolbar.Visibility == NativeVisibility.Visible ? 55 : 0;
-        _drag.Margin = new NativeThickness(left, 0, right + controlRoom, 0);
-        _caption.Height = full ? _options.Height : Math.Max(_options.Height, _titleBar.Height / scale);
-        _caption.Background = Brush(_options.Background, full ? (byte)235 : (byte)0);
-        if (_fullscreenButton.Content is NativeFontIcon icon)
-            icon.Glyph = full ? "\uE92C" : "\uE92D";
+        bool maximized = !full && _presenter.State == OverlappedPresenterState.Maximized;
+        // All four controls stay visible in windowed and fullscreen modes.
+        _toolbar.Margin = new NativeThickness(0, 0, 8, 0);
+        _drag.Margin = new NativeThickness(0, 0, ToolbarWidth, 0);
+        _caption.Height = _options.Height;
+        _caption.Background = Brush(_options.Background, _options.CaptionOpacity);
+        UpdateButton(_maximizeButton, maximized ? "\uE923" : "\uE922",
+            maximized ? "Восстановить размер окна" : "Развернуть");
+        UpdateButton(_fullscreenButton, full ? "\uE92C" : "\uE92D",
+            full ? "Выйти из полноэкранного режима (F11 / Esc)" : "На весь экран (F11)");
         QueueRegions();
     }
 
@@ -409,15 +436,23 @@ public sealed class UiWindowsChrome : IDisposable
         var button = new NativeButton
         {
             Width = width, Height = 32, Padding = new NativeThickness(0),
+            HorizontalContentAlignment = NativeHorizontalAlignment.Center,
+            VerticalContentAlignment = NativeVerticalAlignment.Center,
             BorderThickness = new NativeThickness(0),
             Content = new NativeFontIcon { Glyph = glyph,
                 FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets"), FontSize = 13 },
             Background = new NativeBrush(Microsoft.UI.Colors.Transparent)
         };
         button.Click += (_, _) => click();
+        UpdateButton(button, glyph, tooltip);
+        return button;
+    }
+
+    private static void UpdateButton(NativeButton button, string glyph, string tooltip)
+    {
+        if (button.Content is NativeFontIcon icon) icon.Glyph = glyph;
         NativeAutomation.SetName(button, tooltip);
         ToolTipService.SetToolTip(button, tooltip);
-        return button;
     }
 
     private static NativeBrush Brush(Color color, byte alpha = 255)
@@ -440,6 +475,8 @@ public sealed class UiWindowsChrome : IDisposable
         _escape.Invoked -= OnEscapeHotkey;
         _root.RemoveHandler(UIElement.PointerMovedEvent, (PointerEventHandler)OnPointer);
         _root.PointerExited -= OnPointer;
+        _root.PointerEntered -= OnPointer;
+        _native.VisibilityChanged -= OnVisibilityChanged;
         _native.Activated -= OnActivated;
         _native.Closed -= OnClosed;
         _app.Changed -= OnAppChanged;

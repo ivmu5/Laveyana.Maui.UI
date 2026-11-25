@@ -9,6 +9,11 @@ public static class WindowsSmokeConsumer
     public static UiChromeOptions CreateOptions() => new UiChromeOptions
     {
         Title = "Пример",
+        LogoUri = new Uri("ms-appx:///appicon.png"),
+        LogoWidth = 44,
+        LogoHeight = 26,
+        CaptionOpacity = 146,
+        ToolbarOpacity = 230,
         Height = 44
     }.Tab("Главная", () => { });
 }
