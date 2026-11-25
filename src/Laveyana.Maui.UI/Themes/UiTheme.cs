@@ -60,16 +60,16 @@ public enum UiDarkBackground
 /// <summary>Предустановленная палитра интерфейса.</summary>
 public enum UiPalettePreset
 {
-    /// <summary>Исходная палитра LavPulse.</summary>
-    LavPulse,
+    /// <summary>Стандартная палитра Laveyana.</summary>
+    Laveyana = 0,
     /// <summary>Холодные оттенки Ocean.</summary>
-    Ocean,
+    Ocean = 1,
     /// <summary>Тёплая палитра.</summary>
-    Warm,
-    /// <summary>Палитра LavOSC.</summary>
-    LavOsc,
+    Warm = 2,
+    /// <summary>Палитра Mint.</summary>
+    Mint = 3,
     /// <summary>Пользовательская палитра.</summary>
-    Custom,
+    Custom = 4,
 }
 
 /// <summary>Четыре исходных цвета, из которых вычисляются поверхности и контрастный текст.</summary>
@@ -83,8 +83,8 @@ public static class UiPaletteCatalog
     {
         UiPalettePreset.Ocean => new(Color.FromArgb("#8CEBFE"), Color.FromArgb("#A5B0FF"), Color.FromArgb("#589BEC"), Color.FromArgb("#8F84EA")),
         UiPalettePreset.Warm => new(Color.FromArgb("#FFD39A"), Color.FromArgb("#FF9EAE"), Color.FromArgb("#E48275"), Color.FromArgb("#E88EBE")),
-        UiPalettePreset.LavOsc => new(Color.FromArgb("#65DCF1"), Color.FromArgb("#86E7B7"), Color.FromArgb("#263548"), Color.FromArgb("#526780")),
-        UiPalettePreset.LavPulse => new(Color.FromArgb("#58E5FC"), Color.FromArgb("#FF9B65"), Color.FromArgb("#419DFB"), Color.FromArgb("#BF89E7")),
+        UiPalettePreset.Mint => new(Color.FromArgb("#65DCF1"), Color.FromArgb("#86E7B7"), Color.FromArgb("#263548"), Color.FromArgb("#526780")),
+        UiPalettePreset.Laveyana => new(Color.FromArgb("#58E5FC"), Color.FromArgb("#FF9B65"), Color.FromArgb("#419DFB"), Color.FromArgb("#BF89E7")),
         _ => throw new ArgumentOutOfRangeException(nameof(preset), "Для пользовательской палитры используйте UiThemeSettings.CustomPalette.")
     };
 }
@@ -97,14 +97,14 @@ public sealed record UiThemeSettings
     /// <summary>Вариант тёмного оформления.</summary>
     public UiDarkBackground DarkBackground { get; init; }
     /// <summary>Выбранная палитра.</summary>
-    public UiPalettePreset Preset { get; init; } = UiPalettePreset.LavPulse;
+    public UiPalettePreset Preset { get; init; } = UiPalettePreset.Laveyana;
     /// <summary>Цвета пользовательской палитры.</summary>
-    public UiPalette CustomPalette { get; init; } = UiPaletteCatalog.Get(UiPalettePreset.LavPulse);
+    public UiPalette CustomPalette { get; init; } = UiPaletteCatalog.Get(UiPalettePreset.Laveyana);
     /// <summary>Получает цвета выбранной палитры.</summary>
     public UiPalette ResolvePalette() => Preset == UiPalettePreset.Custom ? CustomPalette : UiPaletteCatalog.Get(Preset);
 }
 
-/// <summary>Неизменяемая контрастная тема. Алгоритм основан на оформлении LavPulse.</summary>
+/// <summary>Неизменяемая контрастная тема. </summary>
 public sealed class UiTheme
 {
     private static readonly Color DarkInk = Color.FromArgb("#0B2137");

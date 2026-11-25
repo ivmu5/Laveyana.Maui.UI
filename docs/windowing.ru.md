@@ -33,8 +33,8 @@ protected override Window CreateWindow(IActivationState? activationState)
     {
         var settings = new UiChromeOptions
         {
-            Title = "LavOSC",
-            IconFilePath = Path.Combine(AppContext.BaseDirectory, "Resources", "AppIcon", "lavosc.png")
+            Title = "Пример",
+            IconFilePath = Path.Combine(AppContext.BaseDirectory, "Resources", "AppIcon", "appicon.png")
         };
         settings.Tab("Главная", () => NavigateToDashboard())
             .Tab("Модули", () => NavigateToModules())

@@ -1,13 +1,13 @@
 # Laveyana.Maui.UI
 
-Открытый набор переиспользуемых компонентов и Fluent API для **.NET MAUI 10**. Библиотека выделена из подходов к интерфейсу [LavPulse](https://github.com/ivmu5/LavPulse) с дополнительными идеями [LavOSC](https://github.com/ivmu5/LavOSC). Синтаксис цепочек вдохновлён архивным [CustomMauiUI-old-](https://github.com/ivmu5/CustomMauiUI-old-).
+Открытый набор переиспользуемых компонентов и Fluent API для **.NET MAUI 10**. Единый дизайн-фундамент приложений Laveyana на Windows, Android, iOS и Mac Catalyst.
 
 **Статус: `0.26.11.1` (глобальная версия 0, предварительная разработка).** Windows-сборка библиотек и часть CI-проверок прошли, но полный Verify и тесты интерфейса ещё не подтверждены. До стабильной версии 1 API может изменяться.
 
 ## Зачем нужен пакет
 
 - Единый внешний вид приложения без зависимости от его предметной области.
-- Темы: системная / светлая / тёмная / AMOLED, палитры LavPulse, Ocean, Warm и LavOSC, свои цвета, контрастные роли.
+- Темы: системная / светлая / тёмная / AMOLED, палитры Laveyana, Ocean, Warm и Mint, свои цвета, контрастные роли.
 - Fluent-расширения над нативными MAUI-элементами: размеры, отступы, цвета, сетки, обработчики, привязки.
 - Числовое поле настроек (ввод, ползунок, сброс, нормализация, двусторонний binding).
 - Цветовой редактор HSV, готовый редактор оформления, ленивые группы настроек и вкладки.
@@ -22,7 +22,7 @@
 | `Laveyana.Maui.UI` | `Laveyana.Maui.UI.dll` | `net10.0` | Общие компоненты для MAUI Windows / Android / iOS / Mac Catalyst |
 | `Laveyana.Maui.UI.Windows` | `Laveyana.Maui.UI.Windows.dll` | `net10.0-windows10.0.19041.0` | **Опциональный** нативный заголовок WinUI |
 
-Второй пакет ссылается на первый; обратной зависимости нет. Ни один из них не зависит от LavPulse или LavOSC. В проекте нет собственной БД и обязательного хранилища настроек.
+Второй пакет ссылается на первый; обратной зависимости нет. Пакеты не зависят от приложений-потребителей. В проекте нет собственной БД и обязательного хранилища настроек.
 
 ## Версионирование
 
@@ -51,7 +51,7 @@ return MauiApp.CreateBuilder()
     .UseLaveyanaMauiUi(new UiThemeSettings
     {
         Mode = UiThemeMode.System,
-        Preset = UiPalettePreset.LavPulse
+        Preset = UiPalettePreset.Laveyana
     })
     .Build();
 ```
@@ -67,12 +67,12 @@ public partial class App : Application
     public App(UiThemeManager themes)
     {
         InitializeComponent();
-        themes.Attach(this, UiThemePreferences.Load("lavpulse.ui"));
+        themes.Attach(this, UiThemePreferences.Load("laveyana.ui"));
     }
 }
 ```
 
-Настройки сохраняются **явно**: `UiThemePreferences.Save(themes.Settings, "lavpulse.ui")`. Можно использовать собственное хранилище через `UiThemeManager.Apply(...)`.
+Настройки сохраняются **явно**: `UiThemePreferences.Save(themes.Settings, "laveyana.ui")`. Можно использовать собственное хранилище через `UiThemeManager.Apply(...)`.
 
 ## Fluent API
 
@@ -109,7 +109,7 @@ var appearance = Ui.Appearance(themes.Settings);
 appearance.SettingsChanged += (_, next) =>
 {
     themes.Apply(next); // предпросмотр сразу
-    UiThemePreferences.Save(next, "lavosc.ui");
+    UiThemePreferences.Save(next, "laveyana.ui");
 };
 ```
 
@@ -161,15 +161,19 @@ await animator.SlideAsync(panel, 0, 0, TimeSpan.FromMilliseconds(260));
 
 ## Совместимость с приложениями
 
-Схема переноса из существующих репозиториев: [docs/migration.ru.md](docs/migration.ru.md). В текущий архив включена **самостоятельная библиотека**, исходники LavPulse/LavOSC не изменены.
+Рекомендации для интеграции: [docs/migration.ru.md](docs/migration.ru.md).
 
 ## Документация
 
 - [Архитектура и границы ответственности](docs/architecture.ru.md)
-- [Переход LavPulse и LavOSC на общую сборку](docs/migration.ru.md)
+- [Миграция приложений на общую сборку](docs/migration.ru.md)
 - [GitHub Actions и NuGet](docs/publishing.ru.md)
 - [Правила версионирования v.YY.MM.vv](docs/versioning.ru.md)
 - [Заголовок WinUI](docs/windowing.ru.md)
 - [Статус проверки](docs/verification.ru.md)
 
 Лицензия: **MIT**, © 2026 ivmu5.
+
+## Общие параметры оформления и состояние экрана
+
+`UiDesignTokens` — базовые размеры текста, скруглений, отступов и интерактивных элементов. `Ui` использует эти значения по умолчанию. `UiScreen.SetKeepAwakeAsync` управляет запретом автоматического выключения экрана в поддерживаемых MAUI окружениях (не разблокирует устройство). `UiVisibilityState` объединяет состояние жизненного цикла и доступность экрана для остановки дорогостоящих обновлений.
