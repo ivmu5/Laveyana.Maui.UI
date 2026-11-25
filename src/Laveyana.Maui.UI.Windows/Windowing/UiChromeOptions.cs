@@ -2,7 +2,7 @@ using Microsoft.Maui.Graphics;
 
 namespace Laveyana.Maui.UI.Windows.Windowing;
 
-/// <summary>Вкладка заголовка, не зависящая от Shell, LavOSC или LavPulse.</summary>
+/// <summary>Вкладка заголовка, не зависящая от навигации приложения.</summary>
 public sealed record UiChromeTab(string Title, Action Selected);
 
 /// <summary>Конфигурация Windows-заголовка с F11 и авто-скрытием в полноэкранном режиме.</summary>
@@ -12,6 +12,18 @@ public sealed class UiChromeOptions
     public string Title { get; set; } = "Laveyana";
     /// <summary>Путь к значку окна.</summary>
     public string? IconFilePath { get; set; }
+    /// <summary>URI логотипа, например ms-appx:///logo.png. Имеет приоритет над IconFilePath.</summary>
+    public Uri? LogoUri { get; set; }
+    /// <summary>Ширина логотипа в DIP.</summary>
+    public double LogoWidth { get; set; } = 44;
+    /// <summary>Высота логотипа в DIP.</summary>
+    public double LogoHeight { get; set; } = 26;
+    /// <summary>Непрозрачность фона заголовка (0–255).</summary>
+    public byte CaptionOpacity { get; set; } = 146;
+    /// <summary>Непрозрачность фона панели кнопок (0–255).</summary>
+    public byte ToolbarOpacity { get; set; } = 230;
+    /// <summary>Цвет рамки окна.</summary>
+    public Color Border { get; set; } = Color.FromArgb("#263548");
     /// <summary>Высота заголовка в DIP.</summary>
     public int Height { get; set; } = 44;
     /// <summary>Номер первоначально выбранной вкладки.</summary>

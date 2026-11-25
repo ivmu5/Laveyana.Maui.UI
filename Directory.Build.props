@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- v.YY.MM.vv: глобальная версия, год, месяц и выпуск за месяц. -->
-    <LaveyanaVersion>0.26.11.2</LaveyanaVersion>
+    <LaveyanaVersion>0.26.11.3</LaveyanaVersion>
     <Version>$(LaveyanaVersion)</Version>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -22,7 +22,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>laveyana;maui;ui;fluent;theme;controls;animation</PackageTags>
-    <PackageReleaseNotes>Нейтральные палитры Laveyana, общие дизайн-токены и платформенные API экрана.</PackageReleaseNotes>
+    <PackageReleaseNotes>Настраиваемый полупрозрачный Windows-заголовок, логотип из ресурсов приложения и собственные кнопки управления окном.</PackageReleaseNotes>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 </Project>

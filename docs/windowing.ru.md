@@ -56,3 +56,19 @@ protected override Window CreateWindow(IActivationState? activationState)
 - Высота отступа доступна как `chrome.ContentInset`.
 - События навигации не должны управлять жизненным циклом сервисов из библиотеки.
 - Проверить на реальном Windows скрытие/появление, drag, maximize, восстановление размеров, DPI и F11 до выпуска NuGet.
+
+## Заголовок с логотипом и собственными кнопками (0.26.11.3)
+
+```csharp
+var chrome = UiWindowsChrome.Attach(window, new UiChromeOptions
+{
+    Title = "Пример",
+    LogoUri = new Uri("ms-appx:///appicon.png"),
+    LogoWidth = 44,
+    LogoHeight = 26,
+    CaptionOpacity = 146,
+    ToolbarOpacity = 230
+});
+```
+
+LogoUri — ресурс приложения-потребителя; библиотека не включает логотип приложения. Абсолютный IconFilePath остаётся совместимым резервным API. Заголовок использует собственные четыре кнопки во всех режимах, системные кнопки скрываются через Collapsed. Разворачивание повторным нажатием восстанавливает размер. F11/Esc, вкладки, автоматическое появление и скрытие в fullscreen сохранены. Старые Windows без AppWindow title bar customization по-прежнему возвращают null из Attach; приложение может использовать существующий fallback. Проверяйте логотип, DPI, перетаскивание, все четыре кнопки и закрытие/открытие окна на реальном устройстве.
