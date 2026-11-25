@@ -12,13 +12,13 @@
 
 Используется такой же принцип, как у `Laveyana.Security`: короткоживущий OIDC, без постоянного API-ключа в secrets. См. [документацию NuGet](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing).
 
-В NuGet.org в настройках Trusted Publishers создать политику для владельца `ivmu5`, GitHub repository `Laveyana.Maui.UI`, workflow `publish-nuget.yml`, environment `nuget-release`. Убедиться, что политика покрывает **оба** Package ID (`Laveyana.Maui.UI` и `Laveyana.Maui.UI.Windows`). Если NuGet требует индивидуальную регистрацию для каждого идентификатора, зарегистрировать оба. Для новой пары имён пакетов может потребоваться операция резервирования/первичного выпуска на стороне NuGet.org.
+В NuGet.org в настройках Trusted Publishers создать политику для владельца `ivmu5`, GitHub repository `Laveyana.Maui.UI`, workflow `publish-nuget.yml`, environment `nuget-release`. Убедиться, что политика покрывает **все три** Package ID (`Laveyana.Maui.UI`, `Laveyana.Maui.UI.Windows`, `Laveyana.Maui.UI.Android`). Если NuGet требует индивидуальную регистрацию для каждого идентификатора, зарегистрировать все три. Для новых имён пакетов может потребоваться операция резервирования/первичного выпуска на стороне NuGet.org.
 
 ## Автоматический выпуск после PR
 
 После объединения Pull Request с `master` запускается `Verify` для итогового коммита. Если **все** задания Verify успешны, `Automatic Release` проверяет, что коммит всё ещё является последним в `master`, связан с действительно объединённым PR и что у версии из `Directory.Build.props` ещё нет Git-тега.
 
-Затем создаётся GitHub Release с тегом `v.YY.MM.vv`. Только **после** публикации релиза вызывается `Publish NuGet` через `workflow_call`: повторная проверка, сборка, упаковка и выпуск двух пакетов в NuGet. По умолчанию NuGet использует OIDC Trusted Publishing, без постоянного API-ключа.
+Затем создаётся GitHub Release с тегом `v.YY.MM.vv`. Только **после** публикации релиза вызывается `Publish NuGet` через `workflow_call`: повторная проверка, сборка, упаковка и выпуск трёх пакетов в NuGet. По умолчанию NuGet использует OIDC Trusted Publishing, без постоянного API-ключа.
 
 **Почему не просто событие `release.published`?** GitHub не запускает вложенные workflows для обычных событий, созданных самим `GITHUB_TOKEN`. Прямой вызов reusable workflow не требует PAT или GitHub App. Ручной опубликованный GitHub Release по-прежнему обрабатывается через `release.published`.
 
@@ -34,8 +34,8 @@
 2. Дождаться успешного Verify на `master` и **обязательно** запустить Extended Regression вручную перед первым публичным релизом. Оба workflow должны пройти, включая платформенные компиляции.
 3. Создать annotated tag `v<version>`, например `v0.26.11.1`, на коммите `master`.
 4. Создать и **опубликовать** GitHub Release по этому тегу. При глобальной версии `0` обязательно отметить его как **Pre-release**. Это отметка GitHub; NuGet сам по себе не считает числовую версию `0.*` предварительной.
-5. GitHub Actions проверит точный Git-тег, схему `v.YY.MM.vv`, ветку и тесты, затем скомпилирует Windows-пакет, упакует оба NuGet и опубликует **сначала основной пакет, затем Windows**. Для месяцев `01`–`09` имя NuGet-пакета проверяется с учётом нормализации ведущего нуля.
-6. Проверить появление и статус проверки двух пакетов в NuGet.org.
+5. GitHub Actions проверит точный Git-тег, схему `v.YY.MM.vv`, ветку и тесты, затем скомпилирует Windows-пакет, упакует три NuGet и опубликует **сначала основной пакет, затем Windows и Android**. Для месяцев `01`–`09` имя NuGet-пакета проверяется с учётом нормализации ведущего нуля.
+6. Проверить появление и статус проверки трёх пакетов в NuGet.org.
 
 ## Команды для локальной проверки
 
@@ -61,3 +61,5 @@ dotnet pack src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj -c Rele
 - Опубликованный вручную GitHub Release → OIDC NuGet, только при точном совпадении тега `v<version>` с версией исходников. Месяц в теге всегда двузначный; номер выпуска без ведущих нулей.
 
 Для защиты от ошибочного выпуска разрешения `id-token: write` есть только в job публикации, запущенной в `nuget-release`.
+
+Android-пакет собирается отдельным Linux job. До релиза добавьте новый Package ID в доверенную политику NuGet, иначе публикация платформенного пакета может завершиться ошибкой.

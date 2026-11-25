@@ -99,9 +99,32 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  prepare-android:
+    name: Build and pack Android
+    if: github.repository == 'ivmu5/Laveyana.Maui.UI'
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.4xx
+      - run: dotnet workload install android maui-android --skip-manifest-update
+      - run: dotnet build tests/Laveyana.Maui.UI.Smoke/Laveyana.Maui.UI.Smoke.csproj -c Release -p:SmokeTargetFramework=net10.0-android
+      - run: dotnet pack src/Laveyana.Maui.UI.Android/Laveyana.Maui.UI.Android.csproj -c Release -o artifacts/android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validated-android-package
+          path: artifacts/android/*.nupkg
+          if-no-files-found: error
+
   publish:
     name: NuGet Trusted Publishing
-    needs: prepare
+    needs: [prepare, prepare-android]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: nuget-release
@@ -113,6 +136,10 @@ jobs:
         with:
           name: validated-packages
           path: packages
+      - uses: actions/download-artifact@v4
+        with:
+          name: validated-android-package
+          path: packages
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.4xx
@@ -123,13 +150,13 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$NUGET_USERNAME"
-          test "$(find packages -name '*.nupkg' | wc -l)" -eq 2
+          test "$(find packages -name '*.nupkg' | wc -l)" -eq 3
       - name: Obtain short-lived NuGet API key (OIDC)
         id: login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
           user: ${{ vars.NUGET_USERNAME }}
-      - name: Publish core first and Windows second
+      - name: Publish core first and platform packages second
         shell: bash
         env:
           VERSION_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
@@ -139,7 +166,7 @@ jobs:
           version="${VERSION_TAG#v}"
           IFS='.' read -r major year month revision <<< "$version"
           normalized="$((10#$major)).$((10#$year)).$((10#$month)).$((10#$revision))"
-          for name in Laveyana.Maui.UI Laveyana.Maui.UI.Windows; do
+          for name in Laveyana.Maui.UI Laveyana.Maui.UI.Windows Laveyana.Maui.UI.Android; do
             package="packages/$name.$normalized.nupkg"
             test -f "$package"
             dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
