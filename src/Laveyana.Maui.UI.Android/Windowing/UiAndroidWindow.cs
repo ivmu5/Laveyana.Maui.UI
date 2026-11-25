@@ -33,7 +33,7 @@ public static class UiAndroidWindow
     {
         ArgumentNullException.ThrowIfNull(activity);
         if (activity.Window is not { } window) return;
-        var controller = WindowCompat.GetInsetsController(window, window.DecorView);
+        if (WindowCompat.GetInsetsController(window, window.DecorView) is not { } controller) return;
         controller.AppearanceLightStatusBars = lightBackground;
         controller.AppearanceLightNavigationBars = lightBackground;
         controller.SystemBarsBehavior = hideStatusBar || hideNavigationBar
