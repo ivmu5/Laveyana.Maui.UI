@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Laveyana.Maui.UI/Laveyana.Maui.UI.csproj" />
     <Project Path="src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj" />
+    <Project Path="src/Laveyana.Maui.UI.Android/Laveyana.Maui.UI.Android.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Laveyana.Maui.UI.Tests/Laveyana.Maui.UI.Tests.csproj" />

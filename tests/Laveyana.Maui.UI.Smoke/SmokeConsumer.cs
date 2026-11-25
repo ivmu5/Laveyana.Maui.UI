@@ -14,7 +14,7 @@ public static class SmokeConsumer
         var grid = Ui.Cards(3);
         grid.SetCards(new View[]
         {
-            Ui.Card(Ui.Text("LavPulse", 16, UiColorRole.Accent).WithMargin(4).At(0, 0)),
+            Ui.Card(Ui.Text("Laveyana", 16, UiColorRole.Accent).WithMargin(4).At(0, 0)),
             Ui.Card(Ui.Number("Порт", 1, 65535, 9000, 1, showSlider: false))
         });
         var entry = Ui.Entry("Название").WithMargin(6);

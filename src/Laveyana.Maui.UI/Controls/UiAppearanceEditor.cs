@@ -25,7 +25,7 @@ public sealed class UiAppearanceEditor : ContentView
     {
         Settings = initial ?? new UiThemeSettings();
         foreach (var text in new[] { "Системная", "Тёмная", "Светлая" }) _mode.Items.Add(text);
-        foreach (var text in new[] { "LavPulse", "Ocean", "Warm", "LavOSC", "Своя" }) _preset.Items.Add(text);
+        foreach (var text in new[] { "Laveyana", "Ocean", "Warm", "Mint", "Своя" }) _preset.Items.Add(text);
         foreach (var text in new[] { "Основной", "Дополнительный", "Градиент 1", "Градиент 2" })
             _colorRole.Items.Add(text);
         _colorRole.SelectedIndex = 0;

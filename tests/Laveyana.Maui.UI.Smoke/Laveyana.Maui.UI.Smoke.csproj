@@ -15,6 +15,12 @@
     <ProjectReference Include="../../src/Laveyana.Maui.UI.Windows/Laveyana.Maui.UI.Windows.csproj"
                       Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
   </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <ProjectReference Include="../../src/Laveyana.Maui.UI.Android/Laveyana.Maui.UI.Android.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'">
+    <Compile Remove="AndroidSmokeConsumer.cs" />
+  </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'">
     <Compile Remove="WindowsSmokeConsumer.cs" />
   </ItemGroup>

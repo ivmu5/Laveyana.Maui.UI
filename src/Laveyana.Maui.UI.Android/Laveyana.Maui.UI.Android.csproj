@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
+    <UseMaui>true</UseMaui>
+    <IsPackable>true</IsPackable>
+    <Description>Android window, system bars and screen visibility helpers for Laveyana.Maui.UI.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <ProjectReference Include="../Laveyana.Maui.UI/Laveyana.Maui.UI.csproj" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

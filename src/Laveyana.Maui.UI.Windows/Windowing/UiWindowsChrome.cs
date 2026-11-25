@@ -36,7 +36,7 @@ using NativeAutomation = Microsoft.UI.Xaml.Automation.AutomationProperties;
 namespace Laveyana.Maui.UI.Windows.Windowing;
 
 /// <summary>
-/// Переиспользуемый WinUI Chrome по мотивам LavPulse и LavOSC.
+/// Переиспользуемый WinUI Chrome для приложений Laveyana.
 /// Не владеет экранами, навигацией или состоянием приложения.
 /// </summary>
 public sealed class UiWindowsChrome : IDisposable

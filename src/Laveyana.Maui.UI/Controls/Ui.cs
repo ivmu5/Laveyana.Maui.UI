@@ -1,3 +1,4 @@
+using Laveyana.Maui.UI.Design;
 using Laveyana.Maui.UI.Fluent;
 using Laveyana.Maui.UI.Layout;
 using Laveyana.Maui.UI.Settings;
@@ -9,7 +10,7 @@ namespace Laveyana.Maui.UI.Controls;
 public static class Ui
 {
     /// <summary>Создаёт стилизованную надпись.</summary>
-    public static Label Text(string text, double size = 14, UiColorRole role = UiColorRole.Text,
+    public static Label Text(string text, double size = UiDesignTokens.BodyFontSize, UiColorRole role = UiColorRole.Text,
         bool bold = false, string? font = null)
         => new Label { Text = text }.WithFont(size, font, bold).WithTextColor(role);
 
@@ -19,11 +20,11 @@ public static class Ui
         var button = new Button
         {
             Text = text,
-            FontSize = 12,
+            FontSize = UiDesignTokens.ButtonFontSize,
             FontFamily = font,
-            CornerRadius = 9,
-            MinimumHeightRequest = 42,
-            Padding = new Thickness(10, 7),
+            CornerRadius = UiDesignTokens.ButtonRadius,
+            MinimumHeightRequest = UiDesignTokens.ButtonHeight,
+            Padding = new Thickness(UiDesignTokens.ButtonHorizontalPadding, UiDesignTokens.ButtonVerticalPadding),
             FontAttributes = primary ? FontAttributes.Bold : FontAttributes.None
         };
         button.WithBackground(primary ? UiColorRole.Primary : UiColorRole.Button);
@@ -32,7 +33,7 @@ public static class Ui
     }
 
     /// <summary>Создаёт карточку с темой, скруглением и контуром.</summary>
-    public static Border Card(View content, double radius = 15, double padding = 14)
+    public static Border Card(View content, double radius = UiDesignTokens.CardRadius, double padding = UiDesignTokens.CardPadding)
     {
         ArgumentNullException.ThrowIfNull(content);
         var border = new Border
@@ -47,7 +48,7 @@ public static class Ui
     }
 
     /// <summary>Создаёт вертикальный контейнер и добавляет его элементы.</summary>
-    public static VerticalStackLayout Stack(double spacing = 8, params View[] children)
+    public static VerticalStackLayout Stack(double spacing = UiDesignTokens.Spacing, params View[] children)
         => new VerticalStackLayout { Spacing = spacing }.AddChildren(children);
 
     /// <summary>Создаёт текстовое поле в цветах темы.</summary>
